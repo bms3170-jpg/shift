@@ -690,6 +690,8 @@
 
     $("statExpense").textContent = formatKRW(expense);
     $("statIncome").textContent = formatKRW(income);
+    if ($("statBalance")) $("statBalance").textContent = formatKRW(income - expense);
+    if ($("financeDonutTotal")) $("financeDonutTotal").textContent = formatKRW(expense);
 
     var remainEl = $("statRemain");
     if (budget > 0) {
@@ -751,37 +753,51 @@
     var listBox = $("txList");
     if (!txs.length) {
       listBox.innerHTML =
-        '<div class="empty"><p class="empty__title">이번 달은 아직 기록이 비어 있어요</p>' +
-        '<p class="empty__desc">지출 한 건만 남겨도 예산 잔액이 자동으로 계산돼요.</p></div>';
+        '<div class="empty finance-empty"><p class="empty__title">이번 달은 아직 기록이 비어 있어요</p>' +
+        '<p class="empty__desc">영수증 OCR이나 내역 추가로 첫 기록을 남겨보세요.</p></div>';
     } else {
-      var html = '<ul class="list">';
+      var html = '<div class="finance-tx-list">';
       txs.forEach(function (t) {
         var d = fromKey(t.date);
+        var dateText =
+          t.date +
+          " (" +
+          WEEKDAY_KO[d.getDay()] +
+          ")";
         var sign = t.kind === "expense" ? "-" : "+";
         html +=
-          '<li class="item"><div class="item__body"><div class="item__top">' +
-          '<p class="item__title">' +
+          '<article class="finance-tx-card" data-kind="' +
+          t.kind +
+          '">' +
+          '<div class="finance-tx-card__main">' +
+          '<span class="finance-tx-card__date">' +
+          escapeHtml(dateText) +
+          "</span>" +
+          '<div class="finance-tx-card__desc">' +
+          '<span class="finance-tx-card__category">' +
           escapeHtml(t.category) +
-          "</p>" +
-          '<span class="tag" style="background:var(--surface-soft);color:var(--ink-soft)">' +
-          (d.getMonth() + 1) +
-          "/" +
-          d.getDate() +
-          "</span></div>" +
-          (t.memo ? '<p class="item__meta"><span>' + escapeHtml(t.memo) + "</span></p>" : "") +
-          '</div><div style="display:flex;align-items:center;gap:6px">' +
-          '<span class="amount amount--' +
+          "</span>" +
+          '<strong class="finance-tx-card__memo">' +
+          escapeHtml(t.memo || (t.kind === "expense" ? "지출" : "수입")) +
+          "</strong>" +
+          "</div>" +
+          "</div>" +
+          '<div class="finance-tx-card__side">' +
+          '<strong class="finance-tx-card__amount amount--' +
           t.kind +
           '">' +
           sign +
           formatKRW(t.amount) +
-          "</span>" +
-          '<button class="icon-btn" data-edit-tx="' +
+          "</strong>" +
+          '<button class="icon-btn finance-tx-edit" data-edit-tx="' +
           t.id +
-          '" aria-label="내역 수정"><svg viewBox="0 0 24 24" class="icon icon--sm"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button>' +
-          "</div></li>";
+          '" aria-label="내역 수정">' +
+          '<svg viewBox="0 0 24 24" class="icon icon--sm"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>' +
+          "</button>" +
+          "</div>" +
+          "</article>";
       });
-      html += "</ul>";
+      html += "</div>";
       listBox.innerHTML = html;
     }
 
@@ -794,31 +810,54 @@
         return b.amount - a.amount;
       });
 
+    if ($("financeCategoryCount")) {
+      $("financeCategoryCount").textContent = cats.length + "개";
+    }
+
     var catBox = $("categoryList");
+    var donut = $("financeDonut");
+
     if (!cats.length) {
       catBox.innerHTML =
-        '<p class="empty__desc" style="margin-top:16px">지출을 등록하면 어디에 많이 썼는지 보여드려요.</p>';
+        '<p class="empty__desc finance-category-empty">지출을 등록하면 카테고리 비율이 표시됩니다.</p>';
+      if (donut) {
+        donut.style.background = "conic-gradient(var(--surface-3) 0 100%)";
+      }
     } else {
-      var max = cats[0].amount;
       var chtml = "";
+      var stops = [];
+      var cursorPct = 0;
+
       cats.forEach(function (c, i) {
         var color = PRESET_COLORS[i % PRESET_COLORS.length];
-        var ratio = expense > 0 ? Math.round((c.amount / expense) * 100) : 0;
+        var rawRatio = expense > 0 ? (c.amount / expense) * 100 : 0;
+        var ratio = Math.round(rawRatio);
+        var startPct = cursorPct;
+        var endPct = i === cats.length - 1 ? 100 : cursorPct + rawRatio;
+        stops.push(color + " " + startPct.toFixed(2) + "% " + endPct.toFixed(2) + "%");
+        cursorPct = endPct;
+
         chtml +=
-          '<div class="catrow"><div class="catrow__top"><span>' +
-          escapeHtml(c.category) +
-          " <span class=\"catrow__amount\">" +
-          ratio +
-          "%</span></span>" +
-          '<span class="catrow__amount">' +
-          formatKRW(c.amount) +
-          '</span></div><div class="catbar"><div class="catbar__fill" style="width:' +
-          Math.round((c.amount / max) * 100) +
-          "%;background:" +
+          '<div class="finance-category-item">' +
+          '<span class="finance-category-item__dot" style="background:' +
           color +
-          '"></div></div></div>';
+          '"></span>' +
+          '<span class="finance-category-item__name">' +
+          escapeHtml(c.category) +
+          "</span>" +
+          '<span class="finance-category-item__amount">' +
+          formatKRW(c.amount) +
+          "</span>" +
+          '<span class="finance-category-item__ratio">' +
+          ratio +
+          "%</span>" +
+          "</div>";
       });
+
       catBox.innerHTML = chtml;
+      if (donut) {
+        donut.style.background = "conic-gradient(" + stops.join(",") + ")";
+      }
     }
 
     // 급여 목록
@@ -2431,19 +2470,41 @@
        * 가계부 지출 내역으로 바로 등록한다.
        */
       if (parsedAmount > 0) {
-        var duplicate = data.transactions.some(function (t) {
-          return (
-            t.kind === "expense" &&
-            t.date === parsedDate &&
-            Number(t.amount) === Number(parsedAmount) &&
-            String(t.memo || "") === String(parsedMemo || "")
-          );
+        /*
+         * 사진 OCR로 예전에 등록했던 같은 거래가 있으면
+         * 기존 OCR 내역을 먼저 삭제하고 새 결과로 교체한다.
+         *
+         * 기준:
+         * 1) source === "receipt-ocr"
+         * 2) 날짜가 같고
+         * 3) 메모(상호/내용)가 같으면 같은 영수증 거래로 본다.
+         *
+         * 직접 입력한 내역은 절대 삭제하지 않는다.
+         */
+        var normalizedMemo = String(parsedMemo || "").trim().toLowerCase();
+
+        var beforeCount = data.transactions.length;
+
+        data.transactions = data.transactions.filter(function (t) {
+          if (t.source !== "receipt-ocr") return true;
+          if (t.date !== parsedDate) return true;
+
+          var oldMemo = String(t.memo || "").trim().toLowerCase();
+
+          // 메모가 둘 다 있으면 동일 메모일 때만 교체
+          if (normalizedMemo && oldMemo) {
+            return oldMemo !== normalizedMemo;
+          }
+
+          // 메모를 OCR이 못 읽은 경우에는 같은 날짜 + 같은 금액을 같은 거래로 본다
+          if (!normalizedMemo || !oldMemo) {
+            return Number(t.amount) !== Number(parsedAmount);
+          }
+
+          return true;
         });
 
-        if (duplicate) {
-          toast("같은 날짜·금액의 영수증이 이미 등록되어 있어 중복 추가하지 않았습니다.");
-          return;
-        }
+        var replacedCount = beforeCount - data.transactions.length;
 
         data.transactions.push({
           id: uid(),
@@ -2465,12 +2526,23 @@
 
         renderAll();
 
-        toast(
-          formatKRW(parsedAmount) +
-            " · " +
-            (parsedCategory || "기타") +
-            " 자동 등록 완료"
-        );
+        if (replacedCount > 0) {
+          toast(
+            "기존 OCR 내역 " +
+              replacedCount +
+              "건을 교체하고 " +
+              formatKRW(parsedAmount) +
+              "으로 다시 등록했습니다."
+          );
+        } else {
+          toast(
+            formatKRW(parsedAmount) +
+              " · " +
+              (parsedCategory || "기타") +
+              " 자동 등록 완료"
+          );
+        }
+
         return;
       }
 

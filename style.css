@@ -1421,3 +1421,585 @@ h1,h2,h3,p { margin-top: 0; }
     line-height: 48px;
   }
 }
+
+
+/* =========================================================
+   HARD FIX · 가계부 내역/OCR 모달 모바일 완전 1열 정렬
+   CSS뿐 아니라 HTML 구조도 날짜/금액을 한 줄씩 분리함
+   ========================================================= */
+
+#txModal .tx-form-stack {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+#txModal .tx-field {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  margin: 14px 0 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+}
+
+#txModal .tx-form-stack .tx-field:first-child {
+  margin-top: 14px !important;
+}
+
+#txModal .field__label {
+  display: block !important;
+  width: 100% !important;
+  margin: 0 0 7px 0 !important;
+  padding: 0 !important;
+  text-align: left !important;
+  line-height: 18px !important;
+}
+
+#txModal .tx-input,
+#txModal #txDate,
+#txModal #txAmount,
+#txModal #txCategory,
+#txModal #txMemo {
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: 50px !important;
+  min-height: 50px !important;
+  max-height: 50px !important;
+  margin: 0 !important;
+  padding: 0 14px !important;
+  border-width: 1px !important;
+  border-style: solid !important;
+  border-radius: 14px !important;
+  box-sizing: border-box !important;
+  font-size: 16px !important;
+  line-height: normal !important;
+}
+
+#txModal #txKind {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  width: 100% !important;
+  height: 50px !important;
+  min-height: 50px !important;
+  max-height: 50px !important;
+  margin: 0 !important;
+  padding: 4px !important;
+  box-sizing: border-box !important;
+}
+
+#txModal #txKind .segmented__item {
+  width: 100% !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  max-height: 40px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  line-height: 40px !important;
+  box-sizing: border-box !important;
+}
+
+/* iPhone Safari date input 강제 보정 */
+#txModal #txDate {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  text-align: left !important;
+  text-align-last: left !important;
+}
+
+#txModal #txDate::-webkit-date-and-time-value {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  width: 100% !important;
+  height: 48px !important;
+  min-height: 48px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  text-align: left !important;
+}
+
+#txModal #txDate::-webkit-datetime-edit {
+  display: flex !important;
+  align-items: center !important;
+  padding: 0 !important;
+}
+
+#txModal #txDate::-webkit-calendar-picker-indicator {
+  margin-left: auto !important;
+}
+
+/* select도 iOS 기본 크기를 무시하고 input과 동일 */
+#txModal #txCategory {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  padding-right: 42px !important;
+}
+
+/* OCR 안내 박스까지 같은 좌우 기준선 */
+#txModal #txOcrNotice {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 0 14px 0 !important;
+  box-sizing: border-box !important;
+}
+
+/* 모바일에서 모달 자체 좌우 폭/패딩 고정 */
+@media screen and (max-width: 600px) {
+  #txModal {
+    padding: 0 !important;
+  }
+
+  #txModal .modal__panel {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    border-radius: 24px 24px 0 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  #txModal .modal__head,
+  #txModal .modal__body,
+  #txModal .modal__foot {
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  #txModal .modal__body {
+    padding: 18px 20px 22px !important;
+  }
+
+  #txModal .modal__head {
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+  }
+
+  #txModal .modal__foot {
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+  }
+}
+
+
+/* =========================================================
+   2026-08-13 가계부 대시보드 리디자인
+   ========================================================= */
+
+#view-finance .pagehead {
+  margin-bottom: 18px;
+}
+
+.finance-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.finance-summary-card {
+  min-width: 0;
+  padding: 16px 14px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: var(--shadow-xs);
+}
+
+.finance-summary-card__label {
+  display: block;
+  margin-bottom: 7px;
+  color: var(--text-3);
+  font-size: .68rem;
+  font-weight: 700;
+}
+
+.finance-summary-card__value {
+  display: block;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 1.02rem;
+  line-height: 1.25;
+  font-weight: 850;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.finance-category-card,
+.finance-history-card,
+.finance-budget-card {
+  margin-top: 14px !important;
+}
+
+.finance-section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.finance-section-head h2 {
+  margin: 3px 0 0;
+  font-size: 1.08rem;
+}
+
+.finance-category-layout {
+  display: grid;
+  grid-template-columns: 190px minmax(0, 1fr);
+  align-items: center;
+  gap: 26px;
+}
+
+.finance-donut-wrap {
+  display: grid;
+  place-items: center;
+}
+
+.finance-donut {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 168px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: conic-gradient(var(--surface-3) 0 100%);
+}
+
+.finance-donut::after {
+  content: "";
+  position: absolute;
+  inset: 30px;
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.finance-donut__center {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  text-align: center;
+}
+
+.finance-donut__center span {
+  color: var(--text-3);
+  font-size: .62rem;
+}
+
+.finance-donut__center strong {
+  max-width: 105px;
+  overflow: hidden;
+  color: var(--text);
+  font-size: .88rem;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.finance-category-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  min-width: 0;
+}
+
+.finance-category-item {
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: .76rem;
+}
+
+.finance-category-item__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.finance-category-item__name {
+  overflow: hidden;
+  color: var(--text-2);
+  font-weight: 700;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.finance-category-item__amount {
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.finance-category-item__ratio {
+  min-width: 34px;
+  color: var(--text-3);
+  text-align: right;
+  font-size: .68rem;
+  white-space: nowrap;
+}
+
+.finance-tx-list {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.finance-tx-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+  padding: 12px 13px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface-2);
+}
+
+.finance-tx-card__main {
+  min-width: 0;
+  flex: 1;
+}
+
+.finance-tx-card__date {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--text-3);
+  font-size: .64rem;
+  font-weight: 650;
+}
+
+.finance-tx-card__desc {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.finance-tx-card__category {
+  flex: 0 0 auto;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-size: .62rem;
+  font-weight: 800;
+}
+
+.finance-tx-card__memo {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text);
+  font-size: .8rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.finance-tx-card__side {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex: 0 0 auto;
+}
+
+.finance-tx-card__amount {
+  font-size: .84rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.finance-tx-edit {
+  width: 31px;
+  height: 31px;
+}
+
+.finance-budget-card {
+  padding: 16px 18px;
+}
+
+.finance-budget-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.finance-budget-row > div {
+  min-width: 0;
+}
+
+.finance-budget-label {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--text-3);
+  font-size: .67rem;
+}
+
+.finance-budget-value {
+  display: block;
+  overflow: hidden;
+  color: var(--text);
+  font-size: .84rem;
+  font-weight: 800;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.finance-progress-head {
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.finance-progress-head .progress__pct {
+  margin: 0;
+  font-family: var(--sans);
+  font-size: .8rem;
+}
+
+.finance-budget-note {
+  margin: 8px 0 0;
+}
+
+.finance-empty {
+  padding: 24px 4px 8px;
+}
+
+.finance-category-empty {
+  margin: 0;
+}
+
+@media screen and (max-width: 600px) {
+  #view-finance .pagehead {
+    align-items: flex-start;
+  }
+
+  #view-finance .pagehead__title h1 {
+    font-size: 2.05rem;
+  }
+
+  #view-finance .pagehead__actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 44px 44px minmax(0, 1fr) minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  #view-finance .pagehead__actions .btn {
+    width: 100%;
+    min-width: 0;
+    padding-inline: 8px;
+  }
+
+  #view-finance #importTxImageBtn,
+  #view-finance #addTxBtn {
+    font-size: .75rem;
+  }
+
+  .finance-summary-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 7px !important;
+  }
+
+  .finance-summary-card {
+    min-height: 78px;
+    padding: 13px 10px;
+    border-radius: 15px;
+  }
+
+  .finance-summary-card__label {
+    margin-bottom: 6px;
+    font-size: .58rem;
+  }
+
+  .finance-summary-card__value {
+    font-size: .83rem;
+  }
+
+  .finance-category-card,
+  .finance-history-card {
+    padding: 16px;
+  }
+
+  .finance-category-layout {
+    grid-template-columns: 132px minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .finance-donut {
+    width: 122px;
+  }
+
+  .finance-donut::after {
+    inset: 23px;
+  }
+
+  .finance-donut__center span {
+    font-size: .53rem;
+  }
+
+  .finance-donut__center strong {
+    max-width: 78px;
+    font-size: .68rem;
+  }
+
+  .finance-category-legend {
+    gap: 7px;
+  }
+
+  .finance-category-item {
+    grid-template-columns: 8px minmax(0, 1fr) auto;
+    gap: 6px;
+    font-size: .63rem;
+  }
+
+  .finance-category-item__ratio {
+    display: none;
+  }
+
+  .finance-category-item__amount {
+    font-size: .61rem;
+  }
+
+  .finance-tx-card {
+    min-height: 66px;
+    padding: 10px 10px 10px 11px;
+  }
+
+  .finance-tx-card__date {
+    font-size: .56rem;
+  }
+
+  .finance-tx-card__category {
+    padding: 2px 6px;
+    font-size: .55rem;
+  }
+
+  .finance-tx-card__memo {
+    font-size: .7rem;
+  }
+
+  .finance-tx-card__amount {
+    font-size: .74rem;
+  }
+
+  .finance-tx-edit {
+    width: 28px;
+    height: 28px;
+  }
+
+  .finance-budget-card {
+    padding: 15px 16px;
+  }
+}

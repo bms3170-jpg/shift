@@ -25,7 +25,7 @@
   />
 
   <!-- ===================== CSS ===================== -->
-  <link rel="stylesheet" href="./style.css?v=20260813-0755" />
+  <link rel="stylesheet" href="./style.css?v=20260813-0900" />
 </head>
 
 
@@ -502,160 +502,101 @@
           </header>
 
 
-          <!-- 통계 -->
-          <div class="statgrid">
+          <!-- 가계부 대시보드 -->
+          <section class="finance-summary-grid" aria-label="이번 달 가계부 요약">
 
-            <div class="card stat">
+            <article class="finance-summary-card">
+              <span class="finance-summary-card__label">이번 달 지출</span>
+              <strong class="finance-summary-card__value" id="statExpense">0원</strong>
+            </article>
 
-              <p class="stat__label">
-                이번 달 지출
-              </p>
+            <article class="finance-summary-card">
+              <span class="finance-summary-card__label">이번 달 수입</span>
+              <strong class="finance-summary-card__value" id="statIncome">0원</strong>
+            </article>
 
-              <p
-                class="stat__value serif"
-                id="statExpense"
-              >
-                0원
-              </p>
+            <article class="finance-summary-card">
+              <span class="finance-summary-card__label">이번 달 잔액</span>
+              <strong class="finance-summary-card__value" id="statBalance">0원</strong>
+            </article>
 
-            </div>
-
-
-            <div class="card stat">
-
-              <p class="stat__label">
-                예산 잔액
-              </p>
-
-              <p
-                class="stat__value serif"
-                id="statRemain"
-              >
-                예산 미설정
-              </p>
-
-            </div>
+          </section>
 
 
-            <div class="card stat">
+          <!-- 카테고리별 지출 -->
+          <section class="card finance-category-card">
 
-              <p class="stat__label">
-                월 수입 합계
-              </p>
-
-              <p
-                class="stat__value serif"
-                id="statIncome"
-              >
-                0원
-              </p>
-
-            </div>
-
-
-            <div class="card stat">
-
-              <p class="stat__label">
-                다음 급여일
-              </p>
-
-              <p
-                class="stat__value serif"
-                id="statPayday"
-              >
-                급여 미설정
-              </p>
-
-            </div>
-
-          </div>
-
-
-          <!-- 예산 -->
-          <div class="card">
-
-            <div class="progress__head">
-
+            <div class="finance-section-head">
               <div>
+                <p class="section-kicker">SPENDING</p>
+                <h2>카테고리별 지출</h2>
+              </div>
+              <span class="mini-badge" id="financeCategoryCount">0개</span>
+            </div>
 
-                <p class="eyebrow">
-                  예산 사용률
-                </p>
+            <div class="finance-category-layout">
 
-                <p
-                  class="progress__pct serif"
-                  id="budgetPct"
-                >
-                  —
-                </p>
-
+              <div class="finance-donut-wrap">
+                <div class="finance-donut" id="financeDonut" aria-label="카테고리별 지출 차트">
+                  <div class="finance-donut__center">
+                    <span>이번 달 지출</span>
+                    <strong id="financeDonutTotal">0원</strong>
+                  </div>
+                </div>
               </div>
 
-
-              <p
-                class="progress__note"
-                id="budgetNote"
-              >
-                설정에서 월 예산을 등록해 보세요
-              </p>
+              <div class="finance-category-legend" id="categoryList"></div>
 
             </div>
 
+          </section>
 
-            <div class="progress">
 
-              <div
-                class="progress__bar"
-                id="budgetBar"
-                style="width: 0%"
-              ></div>
+          <!-- 지출·수입 내역 -->
+          <section class="card finance-history-card">
 
+            <div class="finance-section-head">
+              <div>
+                <p class="section-kicker">HISTORY</p>
+                <h2>지출·수입 내역</h2>
+              </div>
+              <span class="count" id="txCount">0건</span>
             </div>
-
-          </div>
-
-
-          <!-- 거래내역 -->
-          <div class="card">
-
-            <div class="card__head">
-
-              <h2 class="serif">
-                지출·수입 내역
-              </h2>
-
-              <span
-                class="count"
-                id="txCount"
-              >
-                0건
-              </span>
-
-            </div>
-
-
-            <hr class="hairline" />
-
 
             <div id="txList"></div>
 
-          </div>
+          </section>
+
+
+          <!-- 예산/급여 보조 정보 -->
+          <section class="card finance-budget-card">
+            <div class="finance-budget-row">
+              <div>
+                <span class="finance-budget-label">예산 잔액</span>
+                <strong id="statRemain" class="finance-budget-value">예산 미설정</strong>
+              </div>
+              <div>
+                <span class="finance-budget-label">다음 급여일</span>
+                <strong id="statPayday" class="finance-budget-value">급여 미설정</strong>
+              </div>
+            </div>
+
+            <div class="progress__head finance-progress-head">
+              <p class="eyebrow">예산 사용률</p>
+              <p class="progress__pct" id="budgetPct">—</p>
+            </div>
+
+            <div class="progress">
+              <div class="progress__bar" id="budgetBar" style="width:0%"></div>
+            </div>
+
+            <p class="progress__note finance-budget-note" id="budgetNote">
+              월급과 예산을 등록하면 사용률이 표시됩니다
+            </p>
+          </section>
 
 
           <div class="twocol">
-
-            <!-- 분류별 지출 -->
-            <div class="card">
-
-              <p class="eyebrow">
-                분류별 지출
-              </p>
-
-              <div id="categoryList"></div>
-
-            </div>
-
-
             <!-- 월급과 예산 -->
             <div class="card">
 
@@ -1290,7 +1231,7 @@
 
 
         <!-- 메모 -->
-        <label class="field">
+        <label class="field tx-field">
 
           <span class="field__label">
             메모
@@ -1581,16 +1522,16 @@
         </div>
 
 
-        <div class="field-row">
+        <div class="tx-form-stack">
 
-          <label class="field">
+          <label class="field tx-field">
 
             <span class="field__label">
               날짜
             </span>
 
             <input
-              class="input"
+              class="input tx-input"
               id="txDate"
               type="date"
             />
@@ -1598,14 +1539,14 @@
           </label>
 
 
-          <label class="field">
+          <label class="field tx-field">
 
             <span class="field__label">
               금액
             </span>
 
             <input
-              class="input"
+              class="input tx-input"
               id="txAmount"
               type="text"
               inputmode="numeric"
@@ -1617,14 +1558,14 @@
         </div>
 
 
-        <label class="field">
+        <label class="field tx-field">
 
           <span class="field__label">
             분류
           </span>
 
           <select
-            class="input"
+            class="input tx-input"
             id="txCategory"
           ></select>
 
@@ -1638,7 +1579,7 @@
           </span>
 
           <input
-            class="input"
+            class="input tx-input"
             id="txMemo"
             type="text"
             placeholder="예: 점심 식사"
@@ -2008,7 +1949,7 @@
   ====================================================== -->
   <!-- 무료 OCR: 브라우저에서 직접 실행되며 OpenAI API/서버가 필요 없습니다. -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@7/dist/tesseract.min.js"></script>
-  <script src="./app.js?v=20260813-0755"></script>
+  <script src="./app.js?v=20260813-0900"></script>
 
 </body>
 </html>
