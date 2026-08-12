@@ -235,6 +235,12 @@
         ================================================== -->
         <section class="view is-active" id="view-calendar">
 
+          <section class="notice-bar" id="noticeBar" hidden>
+            <div class="notice-bar__icon" aria-hidden="true">📌</div>
+            <p id="noticeBarText"></p>
+            <button class="btn btn--sm btn--soft" id="noticeEditTop" type="button">수정</button>
+          </section>
+
           <header class="pagehead pagehead--calendar">
             <div class="pagehead__title">
               <p class="eyebrow" id="calendarEyebrow">MY SCHEDULE</p>
@@ -691,6 +697,45 @@
 
           <div class="stack">
 
+            <!-- 상단 공지 -->
+            <section class="card">
+              <div class="card__head">
+                <div>
+                  <p class="eyebrow">상단 공지</p>
+                  <h2>달력 위 공지</h2>
+                </div>
+              </div>
+              <label class="field">
+                <span class="field__label">공지 내용</span>
+                <textarea class="input input--area" id="noticeText" rows="3" placeholder="예: 이번 주 재고실사 일정 확인"></textarea>
+              </label>
+              <p class="hint">내용이 있으면 달력 화면 가장 위에 표시됩니다.</p>
+              <button class="btn btn--primary" id="saveNotice" type="button">공지 저장</button>
+            </section>
+
+            <!-- 날짜 알림 -->
+            <section class="card">
+              <div class="card__head">
+                <div>
+                  <p class="eyebrow">앱 내부 날짜 알림</p>
+                  <h2>정해진 날짜 알림</h2>
+                </div>
+              </div>
+              <p class="hint hint--block">푸시 알림은 사용하지 않습니다. 앱을 연 날짜에 해당하는 알림 여러 개를 한 창에 묶어 보여줍니다.</p>
+              <div class="field-row">
+                <label class="field">
+                  <span class="field__label">날짜</span>
+                  <input class="input" id="reminderDate" type="date" />
+                </label>
+                <label class="field">
+                  <span class="field__label">알림 내용</span>
+                  <input class="input" id="reminderText" type="text" placeholder="예: 위생교육 갱신 확인" />
+                </label>
+              </div>
+              <button class="btn btn--primary" id="addReminderBtn" type="button">알림 추가</button>
+              <div id="reminderList"></div>
+            </section>
+
             <!-- 기본 출발지 -->
             <section class="card">
 
@@ -1135,6 +1180,21 @@
           id="durationHint"
         ></p>
 
+        <!-- 휴게시간 -->
+        <div class="field-row break-row" id="breakRow">
+          <label class="field">
+            <span class="field__label">휴게시간 설정</span>
+            <select class="input" id="evBreakMode">
+              <option value="auto">자동</option>
+              <option value="manual">직접 설정</option>
+            </select>
+          </label>
+          <label class="field">
+            <span class="field__label">휴게시간 (분)</span>
+            <input class="input" id="evBreakMinutes" type="number" min="0" step="5" value="0" />
+          </label>
+        </div>
+        <p class="hint">자동: 7시간 이상 30분 · 8시간 이상 60분</p>
 
         <!-- 장소 -->
         <label class="field">
@@ -1390,6 +1450,31 @@
 
     </div>
 
+  </div>
+
+
+  <!-- =====================================================
+       오늘의 앱 내부 알림
+  ====================================================== -->
+  <div class="modal" id="todayReminderModal" hidden>
+    <div class="modal__panel modal__panel--compact" role="dialog" aria-modal="true" aria-labelledby="todayReminderTitle">
+      <div class="modal__head">
+        <div>
+          <p class="eyebrow">TODAY REMINDER</p>
+          <h2 class="serif" id="todayReminderTitle">오늘의 알림</h2>
+        </div>
+        <button class="icon-btn" data-close type="button" aria-label="닫기">×</button>
+      </div>
+      <div class="modal__body">
+        <span class="mini-badge" id="todayReminderCount">0개의 알림</span>
+        <ul class="today-reminder-list" id="todayReminderList"></ul>
+        <p class="hint">앱 푸시 알림이 아니라, ShiftMate를 열었을 때만 표시됩니다.</p>
+      </div>
+      <div class="modal__foot">
+        <span class="spacer"></span>
+        <button class="btn btn--primary" data-close type="button">확인</button>
+      </div>
+    </div>
   </div>
 
 

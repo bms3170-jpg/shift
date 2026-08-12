@@ -11,6 +11,7 @@
      --------------------------------------------------------- */
   var STORAGE_KEY = "shiftmate.data.v1";
   var THEME_KEY = "shiftmate.theme";
+  var REMINDER_SHOWN_KEY = "shiftmate.reminder.shown";
   var WEEKDAY_KO = ["일", "월", "화", "수", "목", "금", "토"];
 
   var PRESET_COLORS = [
@@ -42,6 +43,8 @@
     return {
       version: 1,
       homeAddress: "",
+      notice: "",
+      reminders: [],
       shiftTypes: [
         { id: uid(), name: "오픈", color: "#3B82F6", start: "06:00", end: "13:30" },
         { id: uid(), name: "미들", color: "#F59E0B", start: "10:00", end: "18:00" },
@@ -90,6 +93,16 @@
     return {
       version: 1,
       homeAddress: typeof obj.homeAddress === "string" ? obj.homeAddress : "",
+      notice: typeof obj.notice === "string" ? obj.notice : "",
+      reminders: Array.isArray(obj.reminders)
+        ? obj.reminders.map(function (r) {
+            return {
+              id: r.id || uid(),
+              date: /^\d{4}-\d{2}-\d{2}$/.test(String(r.date || "")) ? String(r.date) : "",
+              text: String(r.text || "").trim(),
+            };
+          }).filter(function (r) { return r.date && r.text; })
+        : [],
       shiftTypes: Array.isArray(obj.shiftTypes) && obj.shiftTypes.length
         ? obj.shiftTypes.map(function (t) {
             return {
@@ -113,6 +126,8 @@
               shiftTypeId: e.shiftTypeId || "",
               place: e.place || "",
               memo: e.memo || "",
+              breakMode: e.breakMode === "manual" ? "manual" : "auto",
+              breakMinutes: Math.max(0, Number(e.breakMinutes) || 0),
             };
           }).filter(function (e) {
             return /^\d{4}-\d{2}-\d{2}$/.test(e.date);
@@ -226,6 +241,20 @@
     var em = Number(e[0]) * 60 + Number(e[1]);
     if (em <= sm) em += 24 * 60;
     return em - sm;
+  }
+
+  function autoBreakMinutes(start, end) {
+    var minutes = durationMinutes(start, end);
+    if (minutes == null) return 0;
+    if (minutes >= 8 * 60) return 60;
+    if (minutes >= 7 * 60) return 30;
+    return 0;
+  }
+
+  function eventBreakMinutes(e) {
+    if (!e || e.allDay) return 0;
+    if (e.breakMode === "manual") return Math.max(0, Number(e.breakMinutes) || 0);
+    return autoBreakMinutes(e.start, e.end);
   }
 
   function formatDuration(min) {
@@ -458,7 +487,7 @@
       if (e.start) {
         workDays += 1;
         var minutes = durationMinutes(e.start, e.end);
-        if (minutes) totalMinutes += minutes;
+        if (minutes) totalMinutes += Math.max(0, minutes - eventBreakMinutes(e));
       }
     });
 
@@ -500,7 +529,13 @@
     if (!e.allDay && e.start) {
       timeText = e.start + (e.end ? " – " + e.end : "");
       var dur = durationMinutes(e.start, e.end);
-      if (dur) timeText += " (" + formatDuration(dur) + ")";
+      if (dur) {
+        var breakMin = eventBreakMinutes(e);
+        var net = Math.max(0, dur - breakMin);
+        timeText += " (실근무 " + formatDuration(net);
+        if (breakMin) timeText += " · 휴게 " + formatDuration(breakMin);
+        timeText += ")";
+      }
     }
 
     var tag = st
@@ -810,6 +845,9 @@
      --------------------------------------------------------- */
   function renderSettings() {
     $("homeAddress").value = data.homeAddress;
+    if ($("noticeText")) $("noticeText").value = data.notice || "";
+    renderNotice();
+    renderReminderList();
 
     var box = $("shiftList");
     if (!data.shiftTypes.length) {
@@ -839,6 +877,80 @@
     });
     html += "</ul>";
     box.innerHTML = html;
+  }
+
+  function renderNotice() {
+    var bar = $("noticeBar");
+    if (!bar) return;
+    var text = String(data.notice || "").trim();
+    bar.hidden = !text;
+    if (text && $("noticeBarText")) $("noticeBarText").textContent = text;
+  }
+
+  function renderReminderList() {
+    var box = $("reminderList");
+    if (!box) return;
+    var items = (data.reminders || []).slice().sort(function (a, b) {
+      return a.date.localeCompare(b.date);
+    });
+    if (!items.length) {
+      box.innerHTML = '<p class="empty__desc" style="margin-top:14px">등록된 날짜 알림이 없어요.</p>';
+      return;
+    }
+    var html = '<ul class="list">';
+    items.forEach(function (r) {
+      html += '<li class="item"><div class="item__body"><p class="item__title">' +
+        escapeHtml(r.text) + '</p><p class="item__meta"><span>' +
+        escapeHtml(formatDateKo(r.date)) + '</span></p></div>' +
+        '<button class="icon-btn" data-del-reminder="' + r.id + '" aria-label="알림 삭제">' +
+        '<svg viewBox="0 0 24 24" class="icon icon--sm"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button></li>';
+    });
+    html += '</ul>';
+    box.innerHTML = html;
+  }
+
+  function saveNotice() {
+    data.notice = $("noticeText").value.trim();
+    save();
+    renderNotice();
+    toast(data.notice ? "공지를 저장했습니다." : "공지를 비웠습니다.");
+  }
+
+  function addReminder() {
+    var date = $("reminderDate").value;
+    var text = $("reminderText").value.trim();
+    if (!date || !text) {
+      toast("알림 날짜와 내용을 입력해 주세요.");
+      return;
+    }
+    data.reminders.push({ id: uid(), date: date, text: text });
+    $("reminderText").value = "";
+    save();
+    renderReminderList();
+    try { localStorage.removeItem(REMINDER_SHOWN_KEY); } catch (err) {}
+    toast("날짜 알림을 추가했습니다.");
+  }
+
+  function deleteReminder(id) {
+    data.reminders = data.reminders.filter(function (r) { return r.id !== id; });
+    save();
+    renderReminderList();
+    toast("날짜 알림을 삭제했습니다.");
+  }
+
+  function showTodayReminders(force) {
+    var today = toKey(new Date());
+    var todays = (data.reminders || []).filter(function (r) { return r.date === today; });
+    if (!todays.length || !$("todayReminderModal")) return;
+    var shown = "";
+    try { shown = localStorage.getItem(REMINDER_SHOWN_KEY) || ""; } catch (err) {}
+    if (!force && shown === today) return;
+    $("todayReminderList").innerHTML = todays.map(function (r) {
+      return '<li>' + escapeHtml(r.text) + '</li>';
+    }).join("");
+    $("todayReminderCount").textContent = todays.length + "개의 알림";
+    openModal("todayReminderModal");
+    try { localStorage.setItem(REMINDER_SHOWN_KEY, today); } catch (err) {}
   }
 
   function renderAll() {
@@ -950,8 +1062,11 @@
     $("evEnd").value = ev ? ev.end : "";
     $("evPlace").value = ev ? ev.place : "";
     $("evMemo").value = ev ? ev.memo : "";
+    $("evBreakMode").value = ev && ev.breakMode === "manual" ? "manual" : "auto";
+    $("evBreakMinutes").value = ev && ev.breakMode === "manual" ? Math.max(0, Number(ev.breakMinutes) || 0) : autoBreakMinutes(ev ? ev.start : "", ev ? ev.end : "");
 
     syncTimeRow();
+    syncBreakControls();
     syncDurationHint();
     syncMapLinks();
     openModal("eventModal");
@@ -966,6 +1081,18 @@
     if (allDay) $("durationHint").textContent = "";
   }
 
+  function syncBreakControls() {
+    var row = $("breakRow");
+    if (!row) return;
+    var allDay = $("evAllDay").checked;
+    row.style.display = allDay ? "none" : "grid";
+    var manual = $("evBreakMode").value === "manual";
+    $("evBreakMinutes").disabled = !manual;
+    if (!manual && !allDay) {
+      $("evBreakMinutes").value = autoBreakMinutes($("evStart").value, $("evEnd").value);
+    }
+  }
+
   function syncDurationHint() {
     if ($("evAllDay").checked) {
       $("durationHint").textContent = "";
@@ -976,10 +1103,16 @@
       $("durationHint").textContent = "";
       return;
     }
+    var breakMin = $("evBreakMode").value === "manual"
+      ? Math.max(0, Number($("evBreakMinutes").value) || 0)
+      : autoBreakMinutes($("evStart").value, $("evEnd").value);
+    if ($("evBreakMode").value !== "manual") $("evBreakMinutes").value = breakMin;
+    var net = Math.max(0, dur - breakMin);
     var overnight =
       $("evEnd").value && $("evStart").value && $("evEnd").value <= $("evStart").value;
     $("durationHint").textContent =
-      "근무 시간 " + formatDuration(dur) + (overnight ? " · 다음날까지 이어집니다" : "");
+      "전체 " + formatDuration(dur) + " · 휴게 " + formatDuration(breakMin) + " · 실근무 " + formatDuration(net) +
+      (overnight ? " · 다음날까지 이어집니다" : "");
   }
 
   function syncMapLinks() {
@@ -1073,6 +1206,10 @@
       shiftTypeId: shift ? shift.id : "",
       place: String(item.place || "").trim(),
       memo: String(item.memo || "").trim(),
+      breakMode: item.breakMode === "manual" ? "manual" : "auto",
+      breakMinutes: item.breakMode === "manual"
+        ? Math.max(0, Number(item.breakMinutes) || 0)
+        : autoBreakMinutes(allDay ? "" : normalizeTime(start), allDay ? "" : normalizeTime(end)),
     };
   }
 
@@ -1848,6 +1985,14 @@
         '<label><span>종료</span>' +
         '<input type="time" data-import-end="' + index + '" value="' + escapeHtml(item.end) + '">' +
         "</label>" +
+        '<label><span>휴게시간</span>' +
+        '<select data-import-break-mode="' + index + '">' +
+        '<option value="auto" ' + (item.breakMode !== "manual" ? "selected" : "") + '>자동</option>' +
+        '<option value="manual" ' + (item.breakMode === "manual" ? "selected" : "") + '>직접 설정</option>' +
+        '</select></label>' +
+        '<label><span>휴게(분)</span>' +
+        '<input type="number" min="0" step="5" data-import-break="' + index + '" value="' + Math.max(0, Number(item.breakMinutes) || 0) + '" ' + (item.breakMode === "manual" ? "" : "disabled") + '>' +
+        "</label>" +
         '<label style="grid-column:1/-1"><span>제목</span>' +
         '<input type="text" data-import-title="' + index + '" value="' + escapeHtml(item.title) + '">' +
         "</label>" +
@@ -1885,6 +2030,8 @@
     var start = document.querySelector('[data-import-start="' + index + '"]');
     var end = document.querySelector('[data-import-end="' + index + '"]');
     var title = document.querySelector('[data-import-title="' + index + '"]');
+    var breakMode = document.querySelector('[data-import-break-mode="' + index + '"]');
+    var breakInput = document.querySelector('[data-import-break="' + index + '"]');
 
     item.selected = check ? check.checked : false;
     item.date = date ? date.value : "";
@@ -1892,6 +2039,7 @@
     item.start = start ? start.value : "";
     item.end = end ? end.value : "";
     item.title = title ? title.value.trim() : "일정";
+    item.breakMode = breakMode && breakMode.value === "manual" ? "manual" : "auto";
 
     var shiftType = shiftById(item.shiftTypeId);
 
@@ -1917,6 +2065,16 @@
     } else {
       item.allDay = !item.start && !item.end;
     }
+
+    if (item.allDay) {
+      item.breakMinutes = 0;
+    } else if (item.breakMode === "manual") {
+      item.breakMinutes = Math.max(0, Number(breakInput ? breakInput.value : item.breakMinutes) || 0);
+    } else {
+      item.breakMinutes = autoBreakMinutes(item.start, item.end);
+      if (breakInput) breakInput.value = item.breakMinutes;
+    }
+    if (breakInput) breakInput.disabled = item.breakMode !== "manual";
   }
 
   function saveImportedSchedule() {
@@ -1946,6 +2104,8 @@
         shiftTypeId: item.shiftTypeId || "",
         place: item.place || "",
         memo: item.memo || "무료 OCR 스케줄 가져오기",
+        breakMode: item.breakMode === "manual" ? "manual" : "auto",
+        breakMinutes: item.allDay ? 0 : Math.max(0, Number(item.breakMinutes) || 0),
       });
 
       addedCount++;
@@ -1986,6 +2146,10 @@
       shiftTypeId: shiftId,
       place: $("evPlace").value.trim(),
       memo: $("evMemo").value.trim(),
+      breakMode: allDay ? "auto" : ($("evBreakMode").value === "manual" ? "manual" : "auto"),
+      breakMinutes: allDay ? 0 : ($("evBreakMode").value === "manual"
+        ? Math.max(0, Number($("evBreakMinutes").value) || 0)
+        : autoBreakMinutes($("evStart").value, $("evEnd").value)),
     };
 
     if (editingEventId) {
@@ -2496,14 +2660,24 @@
     // 일정 모달 내부
     $("evAllDay").addEventListener("change", function () {
       syncTimeRow();
+      syncBreakControls();
       syncDurationHint();
       syncMapLinks();
     });
     $("evStart").addEventListener("change", function () {
+      syncBreakControls();
       syncDurationHint();
       syncMapLinks();
     });
-    $("evEnd").addEventListener("change", syncDurationHint);
+    $("evEnd").addEventListener("change", function () {
+      syncBreakControls();
+      syncDurationHint();
+    });
+    $("evBreakMode").addEventListener("change", function () {
+      syncBreakControls();
+      syncDurationHint();
+    });
+    $("evBreakMinutes").addEventListener("input", syncDurationHint);
     $("evPlace").addEventListener("input", syncMapLinks);
     $("evDate").addEventListener("change", syncMapLinks);
     $("evShift").addEventListener("change", function () {
@@ -2520,6 +2694,7 @@
         $("evEnd").value = "";
       }
       syncTimeRow();
+      syncBreakControls();
       syncDurationHint();
       syncMapLinks();
     });
@@ -2581,6 +2756,19 @@
     });
 
     // 설정
+    $("saveNotice").addEventListener("click", saveNotice);
+    $("noticeEditTop").addEventListener("click", function () {
+      setView("settings");
+      setTimeout(function () { $("noticeText").focus(); }, 120);
+    });
+    $("addReminderBtn").addEventListener("click", addReminder);
+    $("reminderText").addEventListener("keydown", function (e) {
+      if (e.key === "Enter") addReminder();
+    });
+    $("reminderList").addEventListener("click", function (e) {
+      var del = e.target.closest("[data-del-reminder]");
+      if (del) deleteReminder(del.getAttribute("data-del-reminder"));
+    });
     $("saveHome").addEventListener("click", function () {
       data.homeAddress = $("homeAddress").value.trim();
       save();
@@ -2658,6 +2846,7 @@
     bind();
     renderAll();
     setView("calendar");
+    setTimeout(function () { showTodayReminders(false); }, 80);
   }
 
   if (document.readyState === "loading") {

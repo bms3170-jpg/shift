@@ -833,3 +833,24 @@ h1,h2,h3,p { margin-top: 0; }
 @media (prefers-reduced-motion: reduce) {
   *,*::before,*::after { animation-duration:.01ms!important; transition-duration:.01ms!important; }
 }
+
+
+/* ---- Notice / reminders / break ---- */
+.notice-bar {
+  display:flex; align-items:center; gap:10px; margin-bottom:16px; padding:13px 14px;
+  border:1px solid color-mix(in srgb,var(--primary) 22%,var(--line)); border-radius:16px;
+  background:var(--primary-soft); color:var(--text); box-shadow:var(--shadow-xs);
+}
+.notice-bar__icon { flex:0 0 auto; font-size:1rem; }
+.notice-bar p { flex:1; margin:0; white-space:pre-wrap; font-size:.82rem; font-weight:750; line-height:1.5; }
+.today-reminder-list { margin:14px 0 6px; padding-left:22px; }
+.today-reminder-list li { margin:8px 0; color:var(--text); line-height:1.55; }
+.modal__panel--compact { max-width:460px; }
+#addReminderBtn, #saveNotice { margin-top:12px; }
+#reminderList { margin-top:10px; }
+.break-row { margin-top:12px; }
+#evBreakMinutes:disabled, [data-import-break]:disabled { opacity:.68; background:var(--surface-3); }
+@media (max-width: 520px) {
+  .notice-bar { align-items:flex-start; }
+  .notice-bar .btn { flex:0 0 auto; }
+}
