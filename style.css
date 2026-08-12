@@ -1263,3 +1263,161 @@ h1,h2,h3,p { margin-top: 0; }
     text-overflow: ellipsis !important;
   }
 }
+
+
+/* ---- Receipt OCR button ---- */
+#importTxImageBtn {
+  white-space: nowrap;
+}
+
+@media screen and (max-width: 600px) {
+  #view-finance .pagehead__actions #importTxImageBtn,
+  #view-finance .pagehead__actions #addTxBtn {
+    min-height: 42px;
+  }
+}
+
+
+/* =========================================================
+   2026-08-13 가계부 OCR/내역 등록 모달 모바일 정렬
+   지출/수입 + 날짜 + 금액 + 분류 + 메모 크기 통일
+   ========================================================= */
+
+#txModal .modal__body {
+  width: 100%;
+}
+
+#txModal .field,
+#txModal .segmented {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+#txModal .segmented {
+  min-height: 48px;
+  height: 48px;
+  margin: 0;
+  padding: 4px;
+  border-radius: 16px;
+}
+
+#txModal .segmented__item {
+  height: 38px;
+  min-height: 38px;
+  padding: 0 12px;
+  line-height: 38px;
+  border-radius: 12px;
+  box-sizing: border-box;
+}
+
+#txModal .input,
+#txModal input.input,
+#txModal select.input,
+#txModal textarea.input {
+  display: block;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  margin: 0 !important;
+}
+
+#txModal input.input,
+#txModal select.input {
+  height: 48px !important;
+  min-height: 48px !important;
+  max-height: 48px !important;
+  padding: 0 14px !important;
+  line-height: 48px !important;
+  border-radius: 14px !important;
+}
+
+#txModal textarea.input {
+  min-height: 72px !important;
+  height: 72px !important;
+  padding: 13px 14px !important;
+  line-height: 1.45 !important;
+  resize: vertical;
+  border-radius: 14px !important;
+}
+
+/* iOS Safari 날짜 입력칸이 다른 input보다 크게 보이는 현상 보정 */
+#txModal input[type="date"].input,
+#txModal input[type="number"].input,
+#txModal input[type="text"].input {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  font-size: 16px !important;
+  text-align: left !important;
+}
+
+#txModal input[type="date"].input::-webkit-date-and-time-value {
+  text-align: left;
+  min-height: 46px;
+  line-height: 46px;
+}
+
+#txModal select.input {
+  -webkit-appearance: none;
+  appearance: none;
+  background-position: right 14px center;
+  padding-right: 42px !important;
+}
+
+/* OCR 안내 박스도 입력칸과 동일한 좌우폭 */
+#txModal #txOcrNotice,
+#txModal .schedule-import-notice,
+#txModal .tx-ocr-notice {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* 각 필드 사이 간격도 동일 */
+#txModal .field + .field,
+#txModal .segmented + .field,
+#txModal .field + .segmented {
+  margin-top: 14px !important;
+}
+
+@media screen and (max-width: 600px) {
+  #txModal .modal__panel {
+    width: calc(100vw - 24px) !important;
+    max-width: calc(100vw - 24px) !important;
+  }
+
+  #txModal .modal__body {
+    padding-left: 18px !important;
+    padding-right: 18px !important;
+  }
+
+  #txModal .segmented,
+  #txModal input.input,
+  #txModal select.input {
+    height: 50px !important;
+    min-height: 50px !important;
+    max-height: 50px !important;
+  }
+
+  #txModal .segmented__item {
+    height: 40px !important;
+    min-height: 40px !important;
+    line-height: 40px !important;
+  }
+
+  #txModal textarea.input {
+    height: 76px !important;
+    min-height: 76px !important;
+  }
+
+  #txModal .field__label {
+    display: block;
+    margin-bottom: 7px !important;
+    line-height: 1.25;
+  }
+
+  #txModal input[type="date"].input::-webkit-date-and-time-value {
+    min-height: 48px;
+    line-height: 48px;
+  }
+}

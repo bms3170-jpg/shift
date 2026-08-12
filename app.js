@@ -144,6 +144,7 @@
               amount: Math.max(0, Number(t.amount) || 0),
               category: String(t.category || "기타"),
               memo: t.memo || "",
+              source: t.source || "",
             };
           }).filter(function (t) {
             return /^\d{4}-\d{2}-\d{2}$/.test(t.date);
@@ -2385,10 +2386,12 @@
 
   async function importTransactionImage(file) {
     if (!file) return;
+
     if (!/^image\/(png|jpeg|webp)$/.test(file.type || "")) {
-      toast("JPG, PNG, WEBP 사진을 선택해 주세요.");
+      toast("JPG, PNG, WEBP 영수증 사진을 선택해 주세요.");
       return;
     }
+
     if (file.size > 15 * 1024 * 1024) {
       toast("사진 크기는 15MB 이하로 선택해 주세요.");
       return;
@@ -2397,36 +2400,103 @@
     var btn = $("importTxImageBtn");
     var originalHtml = btn.innerHTML;
     btn.disabled = true;
-    btn.textContent = "OCR 읽는 중...";
-    toast("영수증이나 내역 사진을 읽고 있어요...");
+    btn.textContent = "영수증 읽는 중...";
+    toast("영수증에서 날짜와 금액을 읽고 있어요...");
 
     try {
       var worker = await getOcrWorker();
+
+      // 영수증은 줄 단위 구조가 중요해서 6 모드로 우선 인식
       await worker.setParameters({
         tessedit_pageseg_mode: "6",
         preserve_interword_spaces: "1",
       });
+
       var result = await worker.recognize(file);
       var text = result && result.data ? result.data.text || "" : "";
-      if (!text.trim()) throw new Error("사진에서 글자를 읽지 못했습니다.");
+
+      if (!text.trim()) {
+        throw new Error("영수증에서 글자를 읽지 못했습니다.");
+      }
+
+      console.log("가계부 영수증 OCR:\n", text);
 
       var parsedDate = parseReceiptDate(text);
       var parsedAmount = parseReceiptAmount(text);
       var parsedCategory = guessReceiptCategory(text);
       var parsedMemo = guessReceiptMemo(text);
 
+      /*
+       * 금액까지 정상 인식되면 사용자가 저장 버튼을 누르지 않아도
+       * 가계부 지출 내역으로 바로 등록한다.
+       */
+      if (parsedAmount > 0) {
+        var duplicate = data.transactions.some(function (t) {
+          return (
+            t.kind === "expense" &&
+            t.date === parsedDate &&
+            Number(t.amount) === Number(parsedAmount) &&
+            String(t.memo || "") === String(parsedMemo || "")
+          );
+        });
+
+        if (duplicate) {
+          toast("같은 날짜·금액의 영수증이 이미 등록되어 있어 중복 추가하지 않았습니다.");
+          return;
+        }
+
+        data.transactions.push({
+          id: uid(),
+          date: parsedDate,
+          kind: "expense",
+          amount: Number(parsedAmount),
+          category:
+            EXPENSE_CATEGORIES.indexOf(parsedCategory) >= 0
+              ? parsedCategory
+              : "기타",
+          memo: parsedMemo || "영수증 OCR 자동등록",
+          source: "receipt-ocr",
+        });
+
+        save();
+
+        var receiptDate = fromKey(parsedDate);
+        finCursor = startOfMonth(receiptDate);
+
+        renderAll();
+
+        toast(
+          formatKRW(parsedAmount) +
+            " · " +
+            (parsedCategory || "기타") +
+            " 자동 등록 완료"
+        );
+        return;
+      }
+
+      /*
+       * 금액을 못 읽었을 때는 잘못된 0원 내역을 자동 저장하지 않고
+       * 기존 입력 창에 OCR 결과를 채워 사용자가 직접 확인하게 한다.
+       */
       openTxModal(null);
       setTxKind("expense");
       $("txDate").value = parsedDate;
-      $("txAmount").value = parsedAmount ? Number(parsedAmount).toLocaleString("ko-KR") : "";
-      $("txCategory").value = EXPENSE_CATEGORIES.indexOf(parsedCategory) >= 0 ? parsedCategory : "기타";
+      $("txAmount").value = "";
+      $("txCategory").value =
+        EXPENSE_CATEGORIES.indexOf(parsedCategory) >= 0
+          ? parsedCategory
+          : "기타";
       $("txMemo").value = parsedMemo;
       $("txOcrNotice").hidden = false;
 
-      toast(parsedAmount ? "사진을 읽었습니다. 내용을 확인해 주세요." : "금액은 확인이 필요합니다. 내용을 확인해 주세요.");
+      toast("금액을 정확히 읽지 못했습니다. 금액만 확인해서 저장해 주세요.");
     } catch (err) {
-      console.error("가계부 OCR 오류:", err);
-      toast(err && err.message ? err.message : "사진을 읽지 못했습니다.");
+      console.error("가계부 영수증 OCR 오류:", err);
+      toast(
+        err && err.message
+          ? err.message
+          : "영수증 사진을 읽지 못했습니다."
+      );
     } finally {
       btn.disabled = false;
       btn.innerHTML = originalHtml;
