@@ -2003,3 +2003,74 @@ h1,h2,h3,p { margin-top: 0; }
     padding: 15px 16px;
   }
 }
+
+
+/* =========================================================
+   Finance dashboard mobile hard lock v2
+   ========================================================= */
+@media screen and (max-width: 600px) {
+  #view-finance > .finance-summary-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 7px !important;
+    width: 100% !important;
+    margin: 0 0 12px !important;
+  }
+
+  #view-finance > .finance-summary-grid > .finance-summary-card {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 82px !important;
+    height: 82px !important;
+    margin: 0 !important;
+    padding: 12px 9px !important;
+    box-sizing: border-box !important;
+  }
+
+  #view-finance .finance-summary-card__label {
+    font-size: 10px !important;
+    line-height: 14px !important;
+    margin: 0 0 5px !important;
+    white-space: nowrap !important;
+  }
+
+  #view-finance .finance-summary-card__value {
+    font-size: 14px !important;
+    line-height: 20px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  #view-finance > .finance-category-card,
+  #view-finance > .finance-history-card,
+  #view-finance > .finance-budget-card {
+    display: block !important;
+    width: 100% !important;
+    margin: 12px 0 0 !important;
+  }
+
+  #view-finance .finance-category-layout {
+    display: grid !important;
+    grid-template-columns: 118px minmax(0, 1fr) !important;
+    gap: 12px !important;
+    align-items: center !important;
+  }
+
+  #view-finance .finance-donut {
+    width: 112px !important;
+  }
+
+  #view-finance .finance-donut::after {
+    inset: 21px !important;
+  }
+
+  /* 이전 가계부 레이아웃 클래스가 DOM에 남아 있어도 숨김 */
+  #view-finance > .statgrid,
+  #view-finance > .progress:not(.finance-budget-card .progress) {
+    display: none !important;
+  }
+}
