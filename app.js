@@ -2182,6 +2182,157 @@
   }
 
   /* ---------------------------------------------------------
+     가계부 사진 OCR
+     --------------------------------------------------------- */
+  function parseReceiptDate(text) {
+    var src = String(text || "");
+    var m = src.match(/\b(20\d{2})\s*[.\/-]\s*(\d{1,2})\s*[.\/-]\s*(\d{1,2})\b/);
+    if (m) {
+      var y = Number(m[1]);
+      var mo = Number(m[2]);
+      var d = Number(m[3]);
+      if (mo >= 1 && mo <= 12 && d >= 1 && d <= daysInMonth(y, mo)) {
+        return y + "-" + pad(mo) + "-" + pad(d);
+      }
+    }
+
+    m = src.match(/\b(\d{2})\s*[.\/-]\s*(\d{1,2})\s*[.\/-]\s*(\d{1,2})\b/);
+    if (m) {
+      var yy = 2000 + Number(m[1]);
+      var mm = Number(m[2]);
+      var dd = Number(m[3]);
+      if (mm >= 1 && mm <= 12 && dd >= 1 && dd <= daysInMonth(yy, mm)) {
+        return yy + "-" + pad(mm) + "-" + pad(dd);
+      }
+    }
+
+    m = src.match(/\b(\d{1,2})\s*월\s*(\d{1,2})\s*일\b/);
+    if (m) {
+      var fy = finCursor.getFullYear();
+      var fm = Number(m[1]);
+      var fd = Number(m[2]);
+      if (fm >= 1 && fm <= 12 && fd >= 1 && fd <= daysInMonth(fy, fm)) {
+        return fy + "-" + pad(fm) + "-" + pad(fd);
+      }
+    }
+
+    return defaultFinanceDate();
+  }
+
+  function receiptNumbers(line) {
+    var out = [];
+    String(line || "").replace(/(?:₩|￦|원)?\s*(\d{1,3}(?:,\d{3})+|\d{3,8})\s*(?:원)?/g, function (_, raw) {
+      var n = Number(String(raw).replace(/,/g, ""));
+      if (n >= 100 && n <= 99999999) out.push(n);
+      return _;
+    });
+    return out;
+  }
+
+  function parseReceiptAmount(text) {
+    var lines = String(text || "").split(/\n+/).map(function (x) { return x.trim(); }).filter(Boolean);
+    var strong = /결제\s*금액|승인\s*금액|합계\s*금액|총\s*금액|총액|합계|받을\s*금액|청구\s*금액|카드\s*결제/i;
+    var weak = /금액|결제|total|amount/i;
+    var candidates = [];
+
+    lines.forEach(function (line) {
+      var nums = receiptNumbers(line);
+      if (!nums.length) return;
+      var score = strong.test(line) ? 100 : weak.test(line) ? 30 : 0;
+      nums.forEach(function (n) {
+        candidates.push({ amount: n, score: score });
+      });
+    });
+
+    if (!candidates.length) return 0;
+    candidates.sort(function (a, b) {
+      if (a.score !== b.score) return b.score - a.score;
+      return b.amount - a.amount;
+    });
+    return candidates[0].amount;
+  }
+
+  function guessReceiptCategory(text) {
+    var t = String(text || "").toLowerCase();
+    if (/카페|커피|스타벅스|메가커피|컴포즈|빽다방|음식|식당|분식|치킨|피자|버거|배달|restaurant|cafe|coffee/.test(t)) return "식비";
+    if (/버스|지하철|택시|주유|주차|철도|기차|교통|t-money|tmoney/.test(t)) return "교통";
+    if (/월세|관리비|전기|가스|수도|통신|휴대폰|인터넷/.test(t)) return "주거·통신";
+    if (/마트|편의점|다이소|생활|세제|휴지|문구/.test(t)) return "생활용품";
+    if (/약국|병원|의원|치과|의료|건강/.test(t)) return "의료·건강";
+    if (/영화|극장|공연|노래방|게임|문화|여가|여행/.test(t)) return "문화·여가";
+    if (/미용|헤어|네일|의류|옷|신발|화장품/.test(t)) return "의류·미용";
+    if (/축의|부의|경조/.test(t)) return "경조사";
+    if (/증권|주식|펀드|저축|적금|투자/.test(t)) return "저축·투자";
+    return "기타";
+  }
+
+  function guessReceiptMemo(text) {
+    var skip = /사업자|대표자|주소|전화|tel|카드|승인|거래|영수증|매출|합계|금액|부가세|과세|면세|일시|날짜|date|total|amount/i;
+    var lines = String(text || "").split(/\n+/).map(function (x) {
+      return x.replace(/\s+/g, " ").trim();
+    }).filter(Boolean);
+
+    for (var i = 0; i < Math.min(lines.length, 12); i++) {
+      var line = lines[i];
+      if (line.length < 2 || line.length > 35) continue;
+      if (skip.test(line)) continue;
+      if (/^[\d\s:./,\-₩￦원]+$/.test(line)) continue;
+      if (/[가-힣A-Za-z]/.test(line)) return line;
+    }
+    return "사진 OCR 가져오기";
+  }
+
+  async function importTransactionImage(file) {
+    if (!file) return;
+    if (!/^image\/(png|jpeg|webp)$/.test(file.type || "")) {
+      toast("JPG, PNG, WEBP 사진을 선택해 주세요.");
+      return;
+    }
+    if (file.size > 15 * 1024 * 1024) {
+      toast("사진 크기는 15MB 이하로 선택해 주세요.");
+      return;
+    }
+
+    var btn = $("importTxImageBtn");
+    var originalHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.textContent = "OCR 읽는 중...";
+    toast("영수증이나 내역 사진을 읽고 있어요...");
+
+    try {
+      var worker = await getOcrWorker();
+      await worker.setParameters({
+        tessedit_pageseg_mode: "6",
+        preserve_interword_spaces: "1",
+      });
+      var result = await worker.recognize(file);
+      var text = result && result.data ? result.data.text || "" : "";
+      if (!text.trim()) throw new Error("사진에서 글자를 읽지 못했습니다.");
+
+      var parsedDate = parseReceiptDate(text);
+      var parsedAmount = parseReceiptAmount(text);
+      var parsedCategory = guessReceiptCategory(text);
+      var parsedMemo = guessReceiptMemo(text);
+
+      openTxModal(null);
+      setTxKind("expense");
+      $("txDate").value = parsedDate;
+      $("txAmount").value = parsedAmount ? Number(parsedAmount).toLocaleString("ko-KR") : "";
+      $("txCategory").value = EXPENSE_CATEGORIES.indexOf(parsedCategory) >= 0 ? parsedCategory : "기타";
+      $("txMemo").value = parsedMemo;
+      $("txOcrNotice").hidden = false;
+
+      toast(parsedAmount ? "사진을 읽었습니다. 내용을 확인해 주세요." : "금액은 확인이 필요합니다. 내용을 확인해 주세요.");
+    } catch (err) {
+      console.error("가계부 OCR 오류:", err);
+      toast(err && err.message ? err.message : "사진을 읽지 못했습니다.");
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = originalHtml;
+    }
+  }
+
+  /* ---------------------------------------------------------
      11. 거래 모달
      --------------------------------------------------------- */
   function fillCategorySelect() {
@@ -2205,6 +2356,7 @@
 
   function openTxModal(txId) {
     editingTxId = txId || null;
+    if ($("txOcrNotice")) $("txOcrNotice").hidden = true;
     var tx = null;
     if (txId) {
       tx = data.transactions.filter(function (t) {
@@ -2714,6 +2866,14 @@
     });
     $("addTxBtn").addEventListener("click", function () {
       openTxModal(null);
+    });
+    $("importTxImageBtn").addEventListener("click", function () {
+      $("txImageInput").click();
+    });
+    $("txImageInput").addEventListener("change", function () {
+      var file = this.files && this.files[0];
+      if (file) importTransactionImage(file);
+      this.value = "";
     });
     $("txList").addEventListener("click", function (e) {
       var edit = e.target.closest("[data-edit-tx]");

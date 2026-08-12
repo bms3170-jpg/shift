@@ -495,11 +495,12 @@ h1,h2,h3,p { margin-top: 0; }
 .calendar-card__head h2 { margin: 4px 0 0; font-size: 1.15rem; }
 .calendar-card__hint { margin: 0; color: var(--text-3); font-size: .72rem; }
 
-.calendar-shell { overflow-x: auto; }
+.calendar-shell { width:100%; overflow-x:hidden; }
 .weekdays, .grid {
   display: grid;
-  grid-template-columns: repeat(7, minmax(76px, 1fr));
-  min-width: 560px;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  width:100%;
+  min-width:0;
 }
 .weekdays { background: var(--surface-2); border-bottom: 1px solid var(--line); }
 .weekdays span {
@@ -853,4 +854,109 @@ h1,h2,h3,p { margin-top: 0; }
 @media (max-width: 520px) {
   .notice-bar { align-items:flex-start; }
   .notice-bar .btn { flex:0 0 auto; }
+}
+
+
+/* ---- Mobile calendar fit / finance OCR ---- */
+.tx-ocr-notice {
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+  margin-bottom:14px;
+  padding:12px 13px;
+  border:1px solid color-mix(in srgb,var(--primary) 24%,var(--line));
+  border-radius:13px;
+  background:var(--primary-soft);
+}
+.tx-ocr-notice strong { color:var(--primary); font-size:.8rem; }
+.tx-ocr-notice span { color:var(--text-2); font-size:.72rem; line-height:1.45; }
+
+@media (max-width: 520px) {
+  /* 달력 전체를 화면 폭 안에 고정 */
+  .calendar-card { width:100%; max-width:100%; }
+  .calendar-shell { width:100%; max-width:100%; overflow:hidden; }
+  .weekdays, .grid {
+    width:100%;
+    min-width:0;
+    grid-template-columns:repeat(7,minmax(0,1fr));
+  }
+  .weekdays span { padding:9px 0; font-size:.62rem; }
+  .cell {
+    min-width:0;
+    min-height:78px;
+    gap:3px;
+    padding:6px 4px;
+    overflow:hidden;
+  }
+  .cell__num { width:23px; height:23px; font-size:.72rem; }
+  .pill {
+    width:100%;
+    max-width:100%;
+    padding:3px 4px;
+    border-radius:6px;
+    font-size:.54rem;
+    line-height:1.25;
+    letter-spacing:-.035em;
+  }
+
+  /* 근무 유형: 2열 x 2줄 = 오픈|미들 / 마감|휴무 */
+  .legend {
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:7px;
+    padding:11px 12px 13px;
+  }
+  .legend__label { grid-column:1 / -1; margin:0 0 1px; }
+  .legend__item {
+    width:100%;
+    min-width:0;
+    min-height:32px;
+    padding:0 9px;
+    gap:5px;
+    border-radius:11px;
+    font-size:.66rem;
+    white-space:nowrap;
+    overflow:hidden;
+  }
+  .legend__time {
+    min-width:0;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    font-size:.61rem;
+  }
+
+  /* 가계부 상단 4개 카드 크기와 숫자 크기 통일 */
+  .statgrid { align-items:stretch; }
+  .statgrid .stat {
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    min-height:108px;
+    padding:14px;
+  }
+  .statgrid .stat__label { min-height:1.25em; }
+  .statgrid .stat__value,
+  .statgrid .stat__value.is-muted {
+    margin-top:8px;
+    font-family:var(--sans);
+    font-size:1.13rem;
+    line-height:1.25;
+    font-weight:800;
+    letter-spacing:-.035em;
+    word-break:keep-all;
+  }
+
+  /* 가계부 버튼은 작은 화면에서도 한 줄 유지 */
+  #view-finance .pagehead__actions {
+    display:grid;
+    grid-template-columns:40px 40px minmax(0,1fr) minmax(0,1fr);
+    gap:7px;
+  }
+  #view-finance .pagehead__actions .btn--pill {
+    min-width:0;
+    padding-inline:9px;
+    font-size:.73rem;
+    white-space:nowrap;
+  }
+  #view-finance .pagehead__actions .btn--primary { margin-left:0; }
 }

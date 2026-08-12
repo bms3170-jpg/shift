@@ -454,6 +454,32 @@
 
 
               <button
+                class="btn btn--soft btn--pill"
+                id="importTxImageBtn"
+                type="button"
+              >
+
+                <svg
+                  viewBox="0 0 24 24"
+                  class="icon icon--sm"
+                  aria-hidden="true"
+                >
+                  <path d="M4 7h3l1.5-2h7L17 7h3v12H4z" />
+                  <circle cx="12" cy="13" r="3.2" />
+                </svg>
+
+                사진 OCR
+
+              </button>
+
+              <input
+                type="file"
+                id="txImageInput"
+                accept="image/png,image/jpeg,image/webp"
+                hidden
+              />
+
+              <button
                 class="btn btn--primary btn--pill"
                 id="addTxBtn"
                 type="button"
@@ -1525,6 +1551,11 @@
 
 
       <div class="modal__body">
+
+        <div class="tx-ocr-notice" id="txOcrNotice" hidden>
+          <strong>사진 OCR 결과</strong>
+          <span>자동으로 채운 내용을 확인한 뒤 저장해 주세요.</span>
+        </div>
 
         <div
           class="segmented"
