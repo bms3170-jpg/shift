@@ -1206,3 +1206,60 @@ h1,h2,h3,p { margin-top: 0; }
     justify-content: center;
   }
 }
+
+
+/* =========================================================
+   2026-08-13 Mobile finance cards - force alignment
+   모바일 Safari/GitHub Pages에서도 4개 카드가 완전히 동일하게 보이도록 강제
+   ========================================================= */
+@media screen and (max-width: 600px) {
+  #view-finance .statgrid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-auto-rows: 112px !important;
+    gap: 12px !important;
+    align-items: stretch !important;
+    margin-top: 0 !important;
+  }
+
+  #view-finance .statgrid > .card,
+  #view-finance .statgrid > .card + .card,
+  #view-finance .statgrid > .stat {
+    box-sizing: border-box !important;
+    width: 100% !important;
+    height: 112px !important;
+    min-height: 112px !important;
+    max-height: 112px !important;
+    margin: 0 !important;
+    padding: 18px 16px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+  }
+
+  #view-finance .statgrid .stat__label {
+    width: 100% !important;
+    min-height: 20px !important;
+    margin: 0 0 8px 0 !important;
+    font-size: 12px !important;
+    line-height: 20px !important;
+    white-space: nowrap !important;
+  }
+
+  #view-finance .statgrid .stat__value,
+  #view-finance .statgrid .stat__value.is-muted {
+    width: 100% !important;
+    min-height: 32px !important;
+    margin: 0 !important;
+    font-family: var(--sans) !important;
+    font-size: 20px !important;
+    font-weight: 800 !important;
+    line-height: 32px !important;
+    letter-spacing: -0.03em !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+}
