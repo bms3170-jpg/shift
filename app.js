@@ -126,6 +126,7 @@
               shiftTypeId: e.shiftTypeId || "",
               place: e.place || "",
               memo: e.memo || "",
+              source: e.source || "",
               breakMode: e.breakMode === "manual" ? "manual" : "auto",
               breakMinutes: Math.max(0, Number(e.breakMinutes) || 0),
             };
@@ -2099,6 +2100,33 @@
       return;
     }
 
+    /*
+     * 새 근무표 사진을 다시 불러오면 같은 달에 이전 OCR로 등록했던
+     * 근무표만 먼저 지운 뒤 새 결과로 교체한다.
+     * 사용자가 직접 추가한 약속/일정은 삭제하지 않는다.
+     *
+     * 예전 버전에서 저장된 OCR 일정에는 source가 없을 수 있으므로
+     * memo의 "OCR 스케줄 가져오기" 문구도 함께 확인한다.
+     */
+    var replaceMonths = {};
+    selected.forEach(function (item) {
+      if (item.date) replaceMonths[item.date.slice(0, 7)] = true;
+    });
+
+    var removedCount = 0;
+    data.events = data.events.filter(function (event) {
+      var sameMonth = event.date && replaceMonths[event.date.slice(0, 7)];
+      var isOcrSchedule =
+        event.source === "schedule-ocr" ||
+        /OCR\s*스케줄\s*가져오기/i.test(String(event.memo || ""));
+
+      if (sameMonth && isOcrSchedule) {
+        removedCount++;
+        return false;
+      }
+      return true;
+    });
+
     var addedCount = 0;
 
     selected.forEach(function (item) {
@@ -2112,6 +2140,7 @@
         shiftTypeId: item.shiftTypeId || "",
         place: item.place || "",
         memo: item.memo || "무료 OCR 스케줄 가져오기",
+        source: "schedule-ocr",
         breakMode: item.breakMode === "manual" ? "manual" : "auto",
         breakMinutes: item.allDay ? 0 : Math.max(0, Number(item.breakMinutes) || 0),
       });
@@ -2130,7 +2159,11 @@
 
     renderAll();
     closeModal("scheduleImportModal");
-    toast(addedCount + "개의 일정을 추가했습니다.");
+    if (removedCount > 0) {
+      toast("기존 OCR 근무표 " + removedCount + "개를 지우고 새 일정 " + addedCount + "개로 교체했습니다.");
+    } else {
+      toast(addedCount + "개의 새 근무 일정을 추가했습니다.");
+    }
   }
 
   function saveEvent() {
