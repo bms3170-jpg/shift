@@ -127,6 +127,7 @@
               place: e.place || "",
               memo: e.memo || "",
               source: e.source || "",
+              attendanceSource: e.attendanceSource === "R" ? "R" : (e.attendanceSource === "P" ? "P" : ""),
               breakMode: e.breakMode === "manual" ? "manual" : "auto",
               breakMinutes: Math.max(0, Number(e.breakMinutes) || 0),
             };
@@ -1215,6 +1216,7 @@
       shiftTypeId: shift ? shift.id : "",
       place: String(item.place || "").trim(),
       memo: String(item.memo || "").trim(),
+      attendanceSource: item.attendanceSource === "R" ? "R" : (item.attendanceSource === "P" ? "P" : ""),
       breakMode: item.breakMode === "manual" ? "manual" : "auto",
       breakMinutes: item.breakMode === "manual"
         ? Math.max(0, Number(item.breakMinutes) || 0)
@@ -1608,17 +1610,13 @@
         return;
       }
 
-      var times = extractTimesFromLine(blockText);
+      // P(계획)와 R(실적)이 함께 있는 표는 R 시간을 최우선으로 사용한다.
+      // 예: P 06:00 / R 08:00, P 15:00 / R 15:00 → 08:00~15:00
+      var preferredTimes = extractPreferredScheduleTimes(blockText);
 
-      // 같은 시간이 OCR 중복으로 두 번 잡힌 경우를 정리
-      var uniqueTimes = [];
-      times.forEach(function (time) {
-        if (uniqueTimes.indexOf(time) < 0) uniqueTimes.push(time);
-      });
-
-      if (uniqueTimes.length >= 2) {
-        var startTime = uniqueTimes[0];
-        var endTime = uniqueTimes[1];
+      if (preferredTimes.start && preferredTimes.end) {
+        var startTime = preferredTimes.start;
+        var endTime = preferredTimes.end;
         var matchedShift = classifyShiftByStartTime(startTime);
 
         events.push({
@@ -1628,8 +1626,11 @@
           allDay: false,
           start: startTime,
           end: endTime,
+          attendanceSource: preferredTimes.source,
           place: "",
-          memo: "무료 OCR 스케줄 가져오기",
+          memo: preferredTimes.source === "R"
+            ? "무료 OCR 스케줄 가져오기 · R 실적 적용"
+            : "무료 OCR 스케줄 가져오기",
         });
       }
     });
@@ -1660,10 +1661,10 @@
         return;
       }
 
-      var times = extractTimesFromLine(line);
-      if (times.length >= 2) {
-        var startTime = times[0];
-        var endTime = times[1];
+      var preferredTimes = extractPreferredScheduleTimes(line);
+      if (preferredTimes.start && preferredTimes.end) {
+        var startTime = preferredTimes.start;
+        var endTime = preferredTimes.end;
         var matchedShift = classifyShiftByStartTime(startTime);
 
         events.push({
@@ -1673,8 +1674,11 @@
           allDay: false,
           start: startTime,
           end: endTime,
+          attendanceSource: preferredTimes.source,
           place: "",
-          memo: "무료 OCR 스케줄 가져오기",
+          memo: preferredTimes.source === "R"
+            ? "무료 OCR 스케줄 가져오기 · R 실적 적용"
+            : "무료 OCR 스케줄 가져오기",
         });
       }
     });
@@ -1724,6 +1728,56 @@
     }
 
     return dedupeParsedEvents(events);
+  }
+
+  /**
+   * P = 계획, R = 실적(변경 후 실제 스케줄)로 사용하는 근무표를 처리한다.
+   * 새 사진에 R 시간이 2개 이상 인식되면 반드시 R의 출근/퇴근을 사용한다.
+   * R이 없거나 불완전하면 P를 사용하고, P도 없으면 일반 시간 추출로 fallback한다.
+   */
+  function extractPreferredScheduleTimes(text) {
+    var source = String(text || "")
+      .replace(/[Ⓡ®]/g, " R ")
+      .replace(/[Ⓟ℗]/g, " P ")
+      .replace(/[：]/g, ":")
+      .replace(/[．]/g, ".");
+
+    function markedTimes(marker) {
+      var regex = new RegExp(
+        "(?:^|[^A-Za-z0-9])" + marker + "\\s*[.:·_-]*\\s*(\\d{1,2})\\s*[:.]\\s*(\\d{2})(?!\\d)",
+        "gi"
+      );
+      var found = [];
+      var match;
+
+      while ((match = regex.exec(source)) !== null) {
+        var value = normalizeTime(match[1] + ":" + match[2]);
+        if (value) found.push(value);
+      }
+      return found;
+    }
+
+    var rTimes = markedTimes("R");
+    if (rTimes.length >= 2) {
+      return { start: rTimes[0], end: rTimes[1], source: "R" };
+    }
+
+    var pTimes = markedTimes("P");
+    if (pTimes.length >= 2) {
+      return { start: pTimes[0], end: pTimes[1], source: "P" };
+    }
+
+    var times = extractTimesFromLine(source);
+    var uniqueTimes = [];
+    times.forEach(function (time) {
+      if (uniqueTimes.indexOf(time) < 0) uniqueTimes.push(time);
+    });
+
+    return {
+      start: uniqueTimes[0] || "",
+      end: uniqueTimes[1] || "",
+      source: "",
+    };
   }
 
   /** 한 줄에서 HH:MM 형태의 시간을 순서대로 모두 추출 */
@@ -1980,6 +2034,11 @@
         '<input type="checkbox" data-import-check="' + index + '" ' +
         (item.selected ? "checked" : "") + '>' +
         '<strong>일정 ' + (index + 1) + "</strong>" +
+        (item.attendanceSource === "R"
+          ? '<span class="schedule-import-source schedule-import-source--r">R 실적 적용</span>'
+          : (item.attendanceSource === "P"
+            ? '<span class="schedule-import-source">P 계획</span>'
+            : "")) +
         "</label>" +
         '<label><span>날짜</span>' +
         '<input type="date" data-import-date="' + index + '" value="' + escapeHtml(item.date) + '">' +
@@ -2141,6 +2200,7 @@
         place: item.place || "",
         memo: item.memo || "무료 OCR 스케줄 가져오기",
         source: "schedule-ocr",
+        attendanceSource: item.attendanceSource === "R" ? "R" : (item.attendanceSource === "P" ? "P" : ""),
         breakMode: item.breakMode === "manual" ? "manual" : "auto",
         breakMinutes: item.allDay ? 0 : Math.max(0, Number(item.breakMinutes) || 0),
       });

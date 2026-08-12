@@ -758,6 +758,16 @@ h1,h2,h3,p { margin-top: 0; }
 }
 .schedule-import-item__check { grid-column:1/-1; display:flex!important; align-items:center; gap:8px; }
 .schedule-import-item__check input { width:17px!important; height:17px; accent-color:var(--primary); }
+
+.schedule-import-source {
+  display:inline-flex; align-items:center; min-height:22px; padding:0 8px; margin-left:auto;
+  border-radius:999px; background:var(--surface-3); color:var(--text-3);
+  font-size:.66rem; font-weight:850; letter-spacing:.01em;
+}
+.schedule-import-source--r {
+  background:color-mix(in srgb,var(--blue) 18%,var(--surface));
+  color:var(--blue);
+}
 .schedule-import-item label span { display:block; margin-bottom:4px; color:var(--text-3); font-size:.65rem; font-weight:800; }
 .schedule-import-item input,
 .schedule-import-item select {
