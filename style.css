@@ -960,3 +960,104 @@ h1,h2,h3,p { margin-top: 0; }
   }
   #view-finance .pagehead__actions .btn--primary { margin-left:0; }
 }
+
+
+/* =========================================================
+   Mobile polish v2
+   - 날짜 알림 입력 너비 통일
+   - 가계부 요약 숫자 크기 완전 통일
+   - 달력 근무시간 3줄 표시
+   ========================================================= */
+
+/* iOS Safari의 date input 고유 최소폭 때문에 옆 입력과 어긋나는 현상 방지 */
+#reminderDate,
+#reminderText {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+#reminderDate {
+  display: block;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* 근무 일정은 시작 / 종료 / 휴게시간을 줄바꿈해서 표시 */
+.pill--work {
+  white-space: normal;
+  text-overflow: clip;
+  overflow: hidden;
+  text-align: center;
+}
+.pill--work .pill__time,
+.pill--work .pill__break {
+  display: block;
+  width: 100%;
+}
+.pill--work .pill__time {
+  font-variant-numeric: tabular-nums;
+}
+.pill--work .pill__break {
+  opacity: .82;
+  font-weight: 700;
+}
+
+@media (max-width: 600px) {
+  /* 날짜와 알림내용 모두 카드 폭을 정확히 사용 */
+  #view-settings .field-row .field {
+    width: 100%;
+    min-width: 0;
+  }
+  #reminderDate,
+  #reminderText {
+    height: 44px;
+    min-height: 44px;
+  }
+
+  /* 가계부 상단 4개 카드의 텍스트 크기/높이를 완전히 동일하게 */
+  #view-finance .statgrid .stat {
+    min-height: 104px;
+    height: 104px;
+    padding: 14px;
+  }
+  #view-finance .statgrid .stat__label {
+    min-height: 18px;
+    font-size: .72rem;
+    line-height: 18px;
+  }
+  #view-finance .statgrid .stat__value,
+  #view-finance .statgrid .stat__value.is-muted,
+  #statExpense,
+  #statRemain,
+  #statIncome,
+  #statPayday {
+    margin-top: 8px;
+    font-family: var(--sans) !important;
+    font-size: 1rem !important;
+    line-height: 1.2 !important;
+    font-weight: 800 !important;
+    letter-spacing: -.035em;
+  }
+
+  /* 3줄 텍스트가 ... 없이 들어갈 높이 확보 */
+  .cell {
+    min-height: 94px;
+  }
+  .pill--work {
+    padding: 4px 2px;
+    border-radius: 6px;
+    font-size: .55rem;
+    line-height: 1.18;
+  }
+  .pill--work .pill__time {
+    font-size: .56rem;
+    line-height: 1.2;
+  }
+  .pill--work .pill__break {
+    margin-top: 1px;
+    font-size: .47rem;
+    line-height: 1.2;
+    letter-spacing: -.04em;
+  }
+}

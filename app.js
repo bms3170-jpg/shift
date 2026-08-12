@@ -331,31 +331,20 @@
   }
 
   /* ---------------------------------------------------------
-     4. 구글맵 길찾기 링크
+     4. 네이버지도 링크
      --------------------------------------------------------- */
   /**
-   * 출발 시각이 반영된 구글맵 길찾기 URL 을 만든다.
-   * 미래 시각일 때만 departure_time 을 붙인다(과거 시각은 구글이 무시함).
+   * 장소를 네이버지도에서 연다.
+   * ShiftMate는 장소명을 저장하고 좌표를 별도로 보관하지 않기 때문에,
+   * 네이버지도 검색 화면으로 연결한 뒤 사용자가 길찾기 방식을 선택하도록 한다.
    */
   function buildDirectionsUrl(opts) {
-    var params = ["api=1", "destination=" + encodeURIComponent(opts.destination)];
-    if (opts.origin) params.push("origin=" + encodeURIComponent(opts.origin));
-    params.push("travelmode=" + (opts.mode || "transit"));
-
-    if (opts.date && opts.time) {
-      var d = fromKey(opts.date);
-      var t = opts.time.split(":");
-      d.setHours(Number(t[0]), Number(t[1]), 0, 0);
-      var epoch = Math.floor(d.getTime() / 1000);
-      if (d.getTime() > Date.now()) {
-        params.push("departure_time=" + epoch);
-      }
-    }
-    return "https://www.google.com/maps/dir/?" + params.join("&");
+    var destination = String(opts && opts.destination ? opts.destination : "").trim();
+    return "https://map.naver.com/p/search/" + encodeURIComponent(destination);
   }
 
-  function buildKakaoUrl(place) {
-    return "https://map.kakao.com/?q=" + encodeURIComponent(place);
+  function buildNaverMapUrl(place) {
+    return "https://map.naver.com/p/search/" + encodeURIComponent(String(place || "").trim());
   }
 
   /* ---------------------------------------------------------
@@ -401,24 +390,43 @@
       evs.slice(0, 3).forEach(function (e) {
         var st = shiftById(e.shiftTypeId);
         var color = st ? st.color : "#9c9188";
-        var label;
         if (e.allDay || !e.start) {
-          label = e.title;
+          pills +=
+            '<span class="pill" style="background:' +
+            color +
+            '1f;color:' +
+            color +
+            '" title="' +
+            escapeHtml(e.title) +
+            '">' +
+            escapeHtml(e.title) +
+            "</span>";
         } else if (e.end) {
-          label = e.start + "~" + e.end + " " + e.title;
+          var breakMin = eventBreakMinutes(e);
+          pills +=
+            '<span class="pill pill--work" style="background:' +
+            color +
+            '1f;color:' +
+            color +
+            '" title="' +
+            escapeHtml(e.title) +
+            '">' +
+            '<span class="pill__time">' + escapeHtml(e.start) + '</span>' +
+            '<span class="pill__time">' + escapeHtml(e.end) + '</span>' +
+            '<span class="pill__break">(휴게 ' + breakMin + '분)</span>' +
+            "</span>";
         } else {
-          label = e.start + " " + e.title;
+          pills +=
+            '<span class="pill" style="background:' +
+            color +
+            '1f;color:' +
+            color +
+            '" title="' +
+            escapeHtml(e.title) +
+            '">' +
+            escapeHtml(e.start) +
+            "</span>";
         }
-        pills +=
-          '<span class="pill" style="background:' +
-          color +
-          '1f;color:' +
-          color +
-          '" title="' +
-          escapeHtml(e.title) +
-          '">' +
-          escapeHtml(label) +
-          "</span>";
       });
       if (evs.length > 3) {
         pills += '<span class="pill pill--more">+' + (evs.length - 3) + "</span>";
@@ -564,8 +572,8 @@
         buildDirectionsUrl({ destination: e.place, origin: origin, date: e.date, time: time, mode: "walking" }) +
         '">도보</a>' +
         '<a class="maplink" target="_blank" rel="noopener" href="' +
-        buildKakaoUrl(e.place) +
-        '">카카오맵</a>' +
+        buildNaverMapUrl(e.place) +
+        '">네이버지도</a>' +
         "</div>";
     }
 
@@ -1135,7 +1143,7 @@
     $("linkWalking").href = buildDirectionsUrl({
       destination: place, origin: origin, date: date, time: time, mode: "walking",
     });
-    $("linkKakao").href = buildKakaoUrl(place);
+    $("linkNaver").href = buildNaverMapUrl(place);
     box.hidden = false;
   }
 
