@@ -1071,3 +1071,138 @@ h1,h2,h3,p { margin-top: 0; }
     letter-spacing: -.04em;
   }
 }
+
+/* =========================================================
+   OCR 일정 확인 카드 입력칸 정렬 보정
+   - iPhone Safari의 date/time/select 기본 스타일 차이 제거
+   - 모든 입력칸 동일 높이/폭
+   ========================================================= */
+.schedule-import-item {
+  align-items: start;
+}
+
+.schedule-import-item > label:not(.schedule-import-item__check) {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+}
+
+.schedule-import-item > label:not(.schedule-import-item__check) > span {
+  min-height: 20px;
+  margin: 0 0 6px;
+  line-height: 20px;
+}
+
+.schedule-import-item input:not([type="checkbox"]),
+.schedule-import-item select {
+  display: block;
+  width: 100%;
+  height: 46px;
+  min-height: 46px;
+  max-height: 46px;
+  margin: 0;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 16px;
+  line-height: 46px;
+  box-sizing: border-box;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.schedule-import-item input[type="date"],
+.schedule-import-item input[type="time"] {
+  text-align: left;
+  text-align-last: left;
+}
+
+.schedule-import-item input[type="date"]::-webkit-date-and-time-value,
+.schedule-import-item input[type="time"]::-webkit-date-and-time-value {
+  text-align: left;
+  margin: 0;
+  min-height: 0;
+}
+
+.schedule-import-item input[type="date"]::-webkit-calendar-picker-indicator,
+.schedule-import-item input[type="time"]::-webkit-calendar-picker-indicator {
+  margin-left: auto;
+  opacity: .7;
+}
+
+.schedule-import-item select {
+  padding-right: 38px;
+  line-height: normal;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--text-3) 50%),
+    linear-gradient(135deg, var(--text-3) 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) 20px,
+    calc(100% - 13px) 20px;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+}
+
+.schedule-import-item input:disabled {
+  opacity: .72;
+  background: var(--surface-3);
+}
+
+@media (max-width: 600px) {
+  .schedule-import-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .schedule-import-item__check {
+    min-height: 38px;
+    margin-bottom: 2px;
+  }
+
+  .schedule-import-item > label[style*="grid-column"] {
+    grid-column: auto !important;
+  }
+}
+
+/* =========================================================
+   Finance summary alignment fix
+   statgrid 안의 카드에는 전역 .card + .card 여백을 적용하지 않는다.
+   ========================================================= */
+#view-finance .statgrid > .card,
+#view-finance .statgrid > .card + .card {
+  margin-top: 0 !important;
+}
+
+#view-finance .statgrid {
+  align-items: stretch;
+}
+
+#view-finance .statgrid > .stat {
+  align-self: stretch;
+}
+
+@media (max-width: 600px) {
+  #view-finance .statgrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  #view-finance .statgrid > .stat {
+    width: 100%;
+    min-width: 0;
+    height: 104px;
+    min-height: 104px;
+    margin: 0 !important;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+}
